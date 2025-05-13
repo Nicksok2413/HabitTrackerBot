@@ -2,60 +2,76 @@
 habit-tracker-bot/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml              # GitHub Actions CI/CD
-├── .dockerignore
-├── .env.example                # Пример переменных окружения
-├── .gitignore
-├── .pre-commit-config.yaml     # Конфигурация Pre-commit
-├── alembic.ini                 # Конфигурация Alembic
-├── docker-compose.yml          # Docker Compose конфигурация
-├── Dockerfile.api              # Dockerfile для FastAPI
-├── Dockerfile.bot              # Dockerfile для Telegram бота
-├── Dockerfile.scheduler        # Dockerfile для Scheduler (если отдельный)
-├── pyproject.toml              # Файл Poetry
-├── README.md
-└── src/
-    ├── api/                    # FastAPI приложение (Backend)
-    │   ├── main.py             # Точка входа FastAPI
-    │   ├── core/               # Конфигурация, базовые настройки
-    │   │   └── config.py       # Загрузка настроек (из .env)
-    │   ├── db/                 # Работа с БД
-    │   │   ├── models.py       # SQLAlchemy модели
-    │   │   └── session.py      # Настройка асинхронной сессии
-    │   ├── schemas/            # Pydantic схемы (DTO)
-    │   │   └── habit.py
-    │   │   └── user.py
-    │   ├── services/           # Бизнес-логика (CRUD операции)
-    │   │   └── habit_service.py
-    │   │   └── user_service.py
-    │   ├── endpoints/          # API роутеры
-    │   │   └── habits.py
-    │   │   └── users.py        # (Если нужна регистрация пользователя в API)
-    │   └── security/           # Аутентификация/Авторизация
-    │       └── auth.py         # Логика токенов, проверка API ключа бота
-    ├── bot/                    # Telegram бот (Frontend)
-    │   ├── main.py             # Точка входа бота
-    │   ├── handlers/           # Обработчики команд и сообщений
-    │   │   └── common.py
-    │   │   └── habits.py
-    │   ├── keyboards/          # Генерация клавиатур
-    │   │   └── inline.py
-    │   ├── states/             # Состояния для диалогов (если нужно)
-    │   │   └── *.py
-    │   ├── core/               # Конфигурация бота
-    │   │   └── config.py
-    │   └── api_client.py       # Клиент для взаимодействия с FastAPI
-    ├── migrations/             # Alembic миграции
-    │   ├── versions/           # Файлы миграций
-    │   └── env.py              # Alembic среда выполнения
-    │   └── script.py.mako      # Шаблон миграций
-    ├── scheduler/              # Скрипт планировщика
-    │   ├── main.py             # Точка входа планировщика
-    │   ├── jobs.py             # Задачи для выполнения (напоминания, перенос)
-    │   └── core/
-    │       └── config.py
-    └── tests/                  # Тесты
-        ├── api/
-        └── bot/
-        └── scheduler/
+│       └── ci.yml                  # GitHub Actions CI/CD
+├── src/
+│   ├── api/                        # FastAPI приложение (Backend)
+│   │   ├── core/                   # Ядро (конфигурация, БД, безопасность, исключения, логирование, настройки sentry)
+│   │   │   ├── config.py           # Загрузка настроек (из .env)
+│   │   │   ├── database.py         # Настройка подключения к базе данных с использованием SQLAlchemy.
+│   │   │   ├── exceptions.py       # Модуль кастомных исключений и их обработчиков для FastAPI.
+│   │   │   ├── logging.py          # Настройка конфигурации логирования для приложения с использованием Loguru.
+│   │   │   ├── security.py         # Аутентификация/Авторизация (логика токенов, проверка API ключа бота).
+│   │   │   └── sentry.py           # Настройка Sentry SDK.
+│   │   ├── models/                 # Модели SQLAlchemy
+│   │   │   ├── base.py
+│   │   │   ├── habit.py
+│   │   │   └── user.py
+│   │   ├── repositories/           # Репозитории (слой доступа к данным)
+│   │   │   ├── base.py
+│   │   │   ├── habit.py
+│   │   │   └── user.py
+│   │   ├── routes/                 # API слой (роуты)
+│   │   │   ├── habits.py
+│   │   │   └── users.py
+│   │   ├── schemas/                # Схемы Pydantic (валидация)
+│   │   │   ├── base.py
+│   │   │   ├── habit.py
+│   │   │   └── user.py
+│   │   ├── services/               # Сервисы (бизнес-логика)
+│   │   │   ├── base_service.py
+│   │   │   ├── habit_service.py
+│   │   │   └── user_service.py
+│   │   └── main.py                 # Точка входа FastAPI
+│   │
+│   ├── bot/                        # Telegram бот (Frontend)
+│   │   ├── core/                   # Конфигурация бота
+│   │   │   └── config.py
+│   │   ├── handlers/               # Обработчики команд и сообщений
+│   │   │   ├── common.py
+│   │   │   └── habits.py
+│   │   ├── keyboards/              # Генерация клавиатур
+│   │   │   └── inline.py
+│   │   ├── states/                 # Состояния для диалогов
+│   │   │   └── *.py
+│   │   ├── api_client.py           # Клиент для взаимодействия с FastAPI
+│   │   └── main.py                 # Точка входа бота
+│   │
+│   ├── migrations/                 # Alembic миграции
+│   │   ├── versions/               # Файлы миграций
+│   │   ├── env.py                  # Alembic среда выполнения
+│   │   └── script.py.mako          # Шаблон миграций
+│   │
+│   ├── scheduler/                  # Сервис планировщика
+│   │   ├── core/
+│   │   │   └── config.py           # Конфигурация планировщика
+│   │   ├── jobs.py                 # Задачи для выполнения (напоминания, перенос)
+│   │   └── main.py                 # Точка входа планировщика
+│   │
+│   └── tests/                      # Тесты
+│       ├── api/
+│       ├── bot/
+│       └── scheduler/
+│
+├── .dockerignore                   # Игнорируемые файлы Docker при сборке
+├── .env.example                    # Шаблон файла переменных окружения
+├── .gitignore                      # Игнорируемые файлы Git
+├── .env.example                    # Пример переменных окружения
+├── .pre-commit-config.yaml         # Конфигурация Pre-commit
+├── alembic.ini                     # Конфигурация Alembic
+├── docker-compose.yml              # Docker Compose конфигурация (основной оркестратор)
+├── Dockerfile.api                  # Dockerfile для FastAPI
+├── Dockerfile.bot                  # Dockerfile для Telegram бота
+├── Dockerfile.scheduler            # Dockerfile для Scheduler (если отдельный)
+├── pyproject.toml                  # Файл Poetry
+├── README.md                       # Этот файл
 ```
