@@ -1,0 +1,49 @@
+# === Docker ===
+Dockerfile
+docker-compose.yml
+*.dockerignore
+
+# === Git ===
+.git
+.gitignore
+
+# === Python ===
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# === Environment ===
+.env
+.env.*
+.venv
+venv
+env
+ENV
+
+# === Database ===
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+
+# === IDE ===
+.idea
+# VS Code (опционально)
+.vscode
+
+# === Testing / coverage reports ===
+.pytest_cache
+.coverage
+htmlcov
+tests/
+test.db
+
+# === Project Specific ===
+# Временные директории для тестов
+temp_media/
+temp_logs/
+
+# === Other ===
+README.md
+*.md
