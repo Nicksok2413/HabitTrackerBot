@@ -3,6 +3,12 @@ habit-tracker-bot/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                  # GitHub Actions CI/CD
+│
+├── migrations/                     # Alembic миграции
+│   ├── versions/                   # Файлы миграций
+│   ├── env.py                      # Alembic среда выполнения
+│   └── script.py.mako              # Шаблон миграций
+│
 ├── src/
 │   ├── api/                        # FastAPI приложение (Backend)
 │   │   ├── core/                   # Ядро (конфигурация, БД, безопасность, исключения, логирование, настройки sentry)
@@ -45,11 +51,6 @@ habit-tracker-bot/
 │   │   │   └── *.py
 │   │   ├── api_client.py           # Клиент для взаимодействия с FastAPI
 │   │   └── main.py                 # Точка входа бота
-│   │
-│   ├── migrations/                 # Alembic миграции
-│   │   ├── versions/               # Файлы миграций
-│   │   ├── env.py                  # Alembic среда выполнения
-│   │   └── script.py.mako          # Шаблон миграций
 │   │
 │   ├── scheduler/                  # Сервис планировщика
 │   │   ├── core/
