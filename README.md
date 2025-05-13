@@ -66,7 +66,6 @@ habit-tracker-bot/
 ├── .dockerignore                   # Игнорируемые файлы Docker при сборке
 ├── .env.example                    # Шаблон файла переменных окружения
 ├── .gitignore                      # Игнорируемые файлы Git
-├── .env.example                    # Пример переменных окружения
 ├── .pre-commit-config.yaml         # Конфигурация Pre-commit
 ├── alembic.ini                     # Конфигурация Alembic
 ├── docker-compose.yml              # Docker Compose конфигурация (основной оркестратор)
