@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, Boolean, Integer, String
+from sqlalchemy import BigInteger, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.api.models.base import Base
@@ -12,30 +12,35 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class User(Base):
+    """
+    Представляет пользователя Telegram в приложении.
+
+    Attributes:
+        id: Первичный ключ, внутренний идентификатор пользователя (унаследован от Base).
+        telegram_id: Уникальный идентификатор пользователя в Telegram.
+        username: Имя пользователя в Telegram (может быть None).
+        first_name: Имя пользователя в Telegram (может быть None).
+        last_name: Фамилия пользователя в Telegram (может быть None).
+        is_active: Флаг, активен ли пользователь в системе.
+        is_bot_blocked: Флаг, заблокировал ли пользователь бота.
+        created_at: Время создания записи (унаследовано от TimestampMixin).
+        updated_at: Время последнего обновления записи (унаследовано от TimestampMixin).
+        habits: Список привычек, созданных пользователем.
+    """
+
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     telegram_id: Mapped[int] = mapped_column(
-        BigInteger,
-        unique=True,
-        index=True,
-        nullable=False,
+        BigInteger, unique=True, index=True, nullable=False
     )
-    username: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    first_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    last_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    username: Mapped[str | None] = mapped_column(String(100), index=True)
+    first_name: Mapped[str | None] = mapped_column(String(100))
+    last_name: Mapped[str | None] = mapped_column(String(100))
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    is_bot_blocked: Mapped[bool] = mapped_column(default=False, nullable=False)
     # last_notification_time: Mapped[datetime | None] # Можно добавить для планировщика
 
     # Связи
     habits: Mapped[list["Habit"]] = relationship(
-        "Habit",
-        back_populates="user",
-        cascade="all, delete-orphan",
+        back_populates="user", cascade="all, delete-orphan"
     )
-
-    def __repr__(self) -> str:
-        return (
-            f"<User(id={self.id}, telegram_id={self.telegram_id}, "
-            f"username='{self.username}')>"
-        )
