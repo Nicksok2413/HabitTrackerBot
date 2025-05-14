@@ -38,7 +38,6 @@ class User(Base):
     last_name: Mapped[str | None] = mapped_column(String(100))
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
     is_bot_blocked: Mapped[bool] = mapped_column(default=False, nullable=False)
-    # last_notification_time: Mapped[datetime | None] # Можно добавить для планировщика
 
     # Связи
     habits: Mapped[list["Habit"]] = relationship(

@@ -4,7 +4,7 @@ from datetime import date
 from enum import Enum as PyEnum  # Чтобы не конфликтовать с sqlalchemy.Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, ForeignKey, Enum as SqlEnum
+from sqlalchemy import Date, ForeignKey, Enum as SqlEnum, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.api.models.base import Base
@@ -54,8 +54,9 @@ class HabitExecution(Base):
     # Связи
     habit: Mapped["Habit"] = relationship(back_populates="executions")
 
-    # Можно добавить уникальное ограничение на (habit_id, execution_date)
-    # через __table_args__ если необходимо гарантировать одну запись на день на привычку
-    # __table_args__ = (
-    #     UniqueConstraint("habit_id", "execution_date", name="uq_habit_execution_per_day"),
-    # )
+    # Уникальное ограничение на (habit_id, execution_date), гарантирует одну запись на день на привычку
+    __table_args__ = (
+        UniqueConstraint(
+            "habit_id", "execution_date", name="uq_habit_execution_per_day"
+        ),
+    )

@@ -58,7 +58,7 @@ class Base(DeclarativeBase, TimestampMixin):
 
     # Общий первичный ключ для большинства моделей
     # Если у какой-то модели будет другой ПК, его нужно будет объявить там явно.
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
     def __repr__(self) -> str:
         """
