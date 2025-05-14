@@ -1,11 +1,20 @@
+import os
+import sys
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from src.api.models import metadata_obj as metadata_from_models
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# Добавляем корневую директорию проекта в sys.path, чтобы можно было импортировать из 'src'
+# Предполагаем, что env.py находится в migrations/, а src/ рядом с migrations/
+project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, project_dir)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -16,12 +25,27 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = metadata_from_models
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+
+def get_database_url() -> str:
+    """Читает переменные окружения и формирует URL для БД."""
+    user = os.getenv("POSTGRES_USER")
+    pwd = os.getenv("POSTGRES_PASSWORD")
+    host = os.getenv("POSTGRES_HOST")
+    port = os.getenv("POSTGRES_PORT")
+    db = os.getenv("POSTGRES_DB")
+
+    # Проверка, что все переменные установлены
+    if not all([user, pwd, host, port, db]):
+        sys.exit("Database connection variables are missing.")
+
+    return f"postgresql+psycopg://{user}:{pwd}@{host}:{port}/{db}"
 
 
 def run_migrations_offline() -> None:
@@ -36,12 +60,14 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    db_url = get_database_url()
+
     context.configure(
-        url=url,
+        url=db_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        compare_type=True,
     )
 
     with context.begin_transaction():
@@ -55,8 +81,13 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    db_url = get_database_url()
+
+    connectable_config = config.get_section(config.config_ini_section, {})
+    connectable_config["sqlalchemy.url"] = db_url
+
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        connectable_config,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
@@ -65,6 +96,7 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
+            compare_type=True,
         )
 
         with context.begin_transaction():
