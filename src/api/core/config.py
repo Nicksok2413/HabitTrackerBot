@@ -70,6 +70,15 @@ class Settings(BaseSettings):
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
+    # @computed_field(repr=False)
+    # def DATABASE_URL(self) -> PostgresDsn:  # или str, если PostgresDsn не нужен
+    #     """URL для БД."""
+    #     # Pydantic автоматически преобразует строку в PostgresDsn или вызовет ошибку валидации
+    #     return (
+    #         f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+    #         f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+    #     )  # type: ignore
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
