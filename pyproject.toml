@@ -38,8 +38,8 @@ pre-commit = "^4.2.0"
 # Настройки Ruff
 [tool.ruff]
 line-length = 88
-select = ["E", "F", "W", "I", "N", "UP", "ASYNC", "S", "BLE", "A", "COM", "C4", "T20", "PYI", "PT", "RET", "SIM", "TID", "ARG"] # Выбери нужные тебе правила
-ignore = []
+# select = ["E", "F", "W", "I", "N", "UP", "ASYNC", "S", "BLE", "A", "COM", "C4", "T20", "PYI", "PT", "RET", "SIM", "TID", "ARG"]
+# ignore = []
 # exclude = [] # если нужно исключить папки
 
 [tool.ruff.format]
