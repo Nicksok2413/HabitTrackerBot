@@ -1,11 +1,9 @@
 """Конфигурация приложения."""
 
-from pathlib import Path
-
-from pydantic import Field, PostgresDsn, computed_field
+from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-env_path = Path(__file__).parent.parent.parent.parent / ".env"
+# env_path = Path(__file__).parent.parent.parent.parent / ".env"
 
 
 class Settings(BaseSettings):
@@ -14,7 +12,7 @@ class Settings(BaseSettings):
     # --- Статические настройки ---
 
     # Название приложения
-    PROJECT_NAME: str = "..."
+    PROJECT_NAME: str = "Habit Tracker Bot"
     # Версия API
     API_VERSION: str = "0.1.0"
     # Хост API
@@ -65,19 +63,15 @@ class Settings(BaseSettings):
 
     # Формируем URL БД
     @computed_field(repr=False)
-    def DATABASE_URL(self) -> PostgresDsn:
+    def DATABASE_URL(self) -> str:
         """URL для БД."""
-        return PostgresDsn.build(
-            scheme="postgresql+psycopg",
-            username=self.POSTGRES_USER,
-            password=self.POSTGRES_PASSWORD,
-            host=self.POSTGRES_HOST,
-            port=self.POSTGRES_PORT,
-            path=f"/{self.POSTGRES_DB}",
+        return (
+            f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
     model_config = SettingsConfigDict(
-        env_file=str(env_path),
+        env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,  # Имена переменных окружения не чувствительны к регистру
         extra="ignore",  # Игнорировать лишние переменные окружения
