@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from src.api.core.config import settings
-from src.core.logging import log
+from src.api.core.logging import api_log as log
 
 
 class Database:
@@ -44,7 +44,7 @@ class Database:
         """
         self.engine = create_async_engine(
             settings.DATABASE_URL,
-            echo=settings.DEBUG,  # Включаем логирование SQL запросов в режиме DEBUG
+            echo=settings.DEVELOPMENT,  # Включаем логирование SQL запросов в режиме DEVELOPMENT
             pool_pre_ping=True,  # Проверять соединение перед использованием
             pool_recycle=3600,  # Переподключение каждый час
             **kwargs,
@@ -111,8 +111,8 @@ class Database:
         except Exception as exc:
             log.error(
                 f"Ошибка во время сессии БД, выполняется откат: {exc}",
-                exc_info=settings.DEBUG,
-            )  # Трейсбек только в DEBUG
+                exc_info=settings.DEVELOPMENT,
+            )  # Трейсбек только в DEVELOPMENT
             await session.rollback()
             raise
         finally:
