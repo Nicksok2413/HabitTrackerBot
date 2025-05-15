@@ -3,7 +3,7 @@
 import os
 import sys
 
-from loguru import logger
+from loguru import logger as global_loguru_logger
 from pydantic import BaseModel, Field
 
 
@@ -35,69 +35,80 @@ def setup_logger(
     service_name: str,
     log_config: LogConfig | None = None,
     log_level_override: str | None = None,
-) -> None:
+) -> global_loguru_logger.__class__:
     """
-    Настраивает Loguru логгер для указанного сервиса.
+    Настраивает Loguru логгер для указанного сервиса и возвращает его экземпляр.
+
+    Удаляет все предыдущие обработчики перед добавлением новых,
+    чтобы избежать дублирования при повторных вызовах (например, в тестах).
 
     Args:
         service_name: Имя сервиса (например, "API", "Bot", "Scheduler").
         log_config: Объект конфигурации LogConfig. Если None, используются значения по умолчанию.
         log_level_override: Переопределяет уровень логирования из конфигурации.
+
+    Returns:
+        Сконфигурированный экземпляр логгера Loguru.
     """
     if log_config is None:
-        config = LogConfig()
+        current_config = LogConfig()
     else:
-        config = log_config
+        current_config = log_config
 
     # Применяем переопределения, если они есть
     if log_level_override:
-        config.level = log_level_override
+        current_config.level = log_level_override.upper()
+    else:
+        current_config.level = current_config.level.upper()
 
-    logger.remove()  # Удаляем все предыдущие обработчики, чтобы избежать дублирования
+    # Удаляем все предыдущие обработчики, чтобы избежать дублирования
+    global_loguru_logger.remove()
+
+    # Используем `bind` для добавления service_name в `extra` словарь логгера.
+    # Это позволяет использовать {extra[service_name]} в формате.
+    # Этот экземпляр будет "помнить" это значение.
+    service_specific_logger = global_loguru_logger.bind(service_name=service_name)
 
     # Обработчик для вывода в консоль (stderr)
-    logger.add(
+    service_specific_logger.add(
         sys.stderr,
-        level=config.level.upper(),
-        format=config.format.replace(
-            "{name}", f"{service_name}:{{name}}"
-        ),  # Добавляем имя сервиса в формат
+        level=current_config.level,
+        format=current_config.format,
         colorize=True,
-        serialize=config.serialize,
+        serialize=current_config.serialize,
     )
 
     # Обработчик для записи в файл (если включено)
-    if config.enable_file_logging:
-        log_file_path_formatted = config.log_file_path.format(
+    if current_config.enable_file_logging:
+        log_file_path_formatted = current_config.log_file_path.format(
             service_name=service_name.lower(), time="{time}"
         )
         # Убедимся, что директория logs существует
-        log_dir = os.path.dirname(
-            log_file_path_formatted.split("{time}")[0]
-        )  # Получаем путь к директории
+        log_dir = os.path.dirname(log_file_path_formatted.split("{time}")[0])
         if log_dir and not os.path.exists(log_dir):
             try:
-                os.makedirs(log_dir)
-            except OSError as e:
-                logger.warning(f"Could not create log directory {log_dir}: {e}")
-                # Логирование в файл не будет работать, но консольное останется
+                os.makedirs(log_dir, exist_ok=True)
+            except OSError as exc:
+                # Если не удалось создать директорию, логируем через stderr (он уже настроен)
+                service_specific_logger.warning(
+                    f"Не удалось создать директорию для логов '{log_dir}': {exc}. "
+                    f"Логирование в файл для сервиса '{service_name}' будет отключено."
+                )
+        else:
+            service_specific_logger.add(
+                log_file_path_formatted,
+                level=current_config.level,
+                format=current_config.format,
+                rotation=current_config.rotation,
+                retention=current_config.retention,
+                serialize=current_config.serialize,
+                encoding="utf-8",
+            )
 
-        logger.add(
-            log_file_path_formatted,
-            level=config.level.upper(),
-            format=config.format.replace("{name}", f"{service_name}:{{name}}"),
-            rotation=config.rotation,
-            retention=config.retention,
-            serialize=config.serialize,
-            encoding="utf-8",
-        )
-
-    logger.info(
-        f"Logger configured for service: {service_name} with level: {config.level}"
+    service_specific_logger.info(
+        f"Loguru сконфигурирован. Уровень: {current_config.level}"
     )
+    return service_specific_logger
 
 
-# Можно экспортировать сам логгер, если хотите использовать его напрямую после настройки
-# from loguru import logger as service_logger
-# __all__ = ["setup_logger", "service_logger", "LogConfig"]
 __all__ = ["setup_logger", "LogConfig"]
