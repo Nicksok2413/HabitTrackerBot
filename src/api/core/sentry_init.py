@@ -1,8 +1,8 @@
 """Настройка Sentry SDK."""
 
-from logging import INFO, ERROR
+from logging import INFO, ERROR  # Стандартные уровни логирования для Sentry
 
-import sentry_sdk
+from sentry_sdk import init as sentry_init
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.loguru import LoguruIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
@@ -10,10 +10,11 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from src.api.core.config import settings
 from src.core_shared.logging_setup import setup_logger
-from loguru import logger as sentry_logger  # Импортируем сам логгер
 
-# Настраиваем логгер
-setup_logger(service_name="Sentry", log_level_override=settings.LOG_LEVEL)
+# Получаем экземпляр логгера для этого модуля
+sentry_log = setup_logger(
+    service_name="SentryInit", log_level_override=settings.LOG_LEVEL
+)
 
 
 def initialize_sentry():
@@ -24,7 +25,7 @@ def initialize_sentry():
     sentry_dsn = settings.SENTRY_DSN
 
     if not sentry_dsn:
-        sentry_logger.warning(
+        sentry_log.warning(
             "SENTRY_DSN не установлен в .env. Sentry SDK не инициализирован."
         )
         return
@@ -32,30 +33,20 @@ def initialize_sentry():
     # --- Определяем параметры Sentry ---
 
     # Окружение (Environment)
-    if settings.PRODUCTION:
-        environment = "production"
-    else:  # Development
-        environment = "development"
+    environment = "production" if settings.PRODUCTION else "development"
 
     # Частота семплирования для Performance Monitoring (Traces)
     # Установим 10% для production, 100% для development
-    if environment == "production":
-        traces_sample_rate = 0.1
-    else:
-        traces_sample_rate = 1.0  # Отслеживаем все в разработке
+    traces_sample_rate = 0.1 if environment == "production" else 1.0
 
-    # Частота семплирования для Profiling
-    # Аналогично трейсам, или можно задать другие значения
-    if environment == "production":
-        profiles_sample_rate = 0.1
-    else:
-        profiles_sample_rate = 1.0
+    # Частота семплирования для Profiling аналогично трейсам
+    profiles_sample_rate = 0.1 if environment == "production" else 1.0
 
     # Уровни логирования для интеграции
     log_level_breadcrumbs = INFO  # Уровень для breadcrumbs
     log_level_events = ERROR  # Уровень для событий/ошибок
 
-    sentry_logger.info(
+    sentry_log.info(
         f"Инициализация Sentry SDK. DSN: {'***' + sentry_dsn[-6:]}, "
         f"Environment: {environment}, "
         f"Traces Rate: {traces_sample_rate}, "
@@ -63,7 +54,7 @@ def initialize_sentry():
     )
 
     try:
-        sentry_sdk.init(
+        sentry_init(
             dsn=sentry_dsn,
             integrations=[
                 StarletteIntegration(transaction_style="endpoint"),
@@ -78,6 +69,6 @@ def initialize_sentry():
             profiles_sample_rate=profiles_sample_rate,
             release=f"{settings.PROJECT_NAME}@{settings.API_VERSION}",
         )
-        sentry_logger.info("Sentry SDK успешно инициализирован.")
+        sentry_log.info("Sentry SDK успешно инициализирован.")
     except Exception as exc:
-        sentry_logger.exception(f"Ошибка инициализации Sentry SDK: {exc}")
+        sentry_log.exception(f"Ошибка инициализации Sentry SDK: {exc}")
