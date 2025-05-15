@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     BOT_TOKEN: str = Field(..., description="Токен бота")
     JWT_SECRET_KEY: str = Field(..., description="JWT")
 
+    # Настройки режима разработки/тестирования. В production должно быть False.
+    DEVELOPMENT: bool = Field(..., description="Режим разработки/тестирования")
+
     # Прочие настройки
     DAYS_TO_FORM_HABIT: int = Field(
         default=21,
@@ -61,14 +64,25 @@ class Settings(BaseSettings):
 
     # --- Вычисляемые поля ---
 
+    # Продакшен режим
+    @computed_field
+    def PRODUCTION(self) -> bool:
+        # Считаем продакшеном, если не DEVELOPMENT
+        return not self.DEVELOPMENT
+
     # Формируем URL БД
     @computed_field(repr=False)
     def DATABASE_URL(self) -> str:
-        """URL для БД."""
-        return (
-            f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-        )
+        """URL для БД основной или тестовой."""
+        if self.DEVELOPMENT:
+            # Используем SQLite in-memory для тестов
+            # Чтобы одна и та же БД использовалась в рамках сессии pytest добавляем "?cache=shared" и "&uri=true"
+            return "sqlite+aiosqlite:///:memory:?cache=shared&uri=true"
+        else:
+            return (
+                f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            )
 
     # @computed_field(repr=False)
     # def DATABASE_URL(self) -> PostgresDsn:  # или str, если PostgresDsn не нужен
