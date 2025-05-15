@@ -15,6 +15,7 @@ class LogConfig(BaseModel):
         default=(
             "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
             "<level>{level: <8}</level> | "
+            "<cyan>{extra[service_name]}</cyan> | "
             "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
         ),
         description="Формат лог сообщения",
@@ -85,6 +86,7 @@ def setup_logger(
         )
         # Убедимся, что директория logs существует
         log_dir = os.path.dirname(log_file_path_formatted.split("{time}")[0])
+
         if log_dir and not os.path.exists(log_dir):
             try:
                 os.makedirs(log_dir, exist_ok=True)
