@@ -1,18 +1,10 @@
 """Централизованная настройка логирования для всех сервисов проекта."""
 
-import sys
 import os
-from typing import Optional
+import sys
 
 from loguru import logger
 from pydantic import BaseModel, Field
-
-# Предполагаем, что settings доступны, если этот модуль используется в API
-# Для бота и планировщика LOG_LEVEL и SENTRY_DSN будут передаваться явно или читаться из их конфигов
-try:
-    from src.api.core.config import settings as api_settings
-except ImportError:
-    api_settings = None  # type: ignore
 
 
 class LogConfig(BaseModel):
@@ -37,16 +29,12 @@ class LogConfig(BaseModel):
         default="logs/{service_name}_{time:YYYY-MM-DD}.log",
         description="Путь к файлу логов",
     )
-    sentry_dsn: Optional[str] = Field(
-        default=None, description="DSN для интеграции с Sentry"
-    )
 
 
 def setup_logger(
     service_name: str,
-    log_config: Optional[LogConfig] = None,
-    log_level_override: Optional[str] = None,
-    sentry_dsn_override: Optional[str] = None,
+    log_config: LogConfig | None = None,
+    log_level_override: str | None = None,
 ) -> None:
     """
     Настраивает Loguru логгер для указанного сервиса.
@@ -55,7 +43,6 @@ def setup_logger(
         service_name: Имя сервиса (например, "API", "Bot", "Scheduler").
         log_config: Объект конфигурации LogConfig. Если None, используются значения по умолчанию.
         log_level_override: Переопределяет уровень логирования из конфигурации.
-        sentry_dsn_override: Переопределяет Sentry DSN из конфигурации.
     """
     if log_config is None:
         config = LogConfig()
@@ -65,17 +52,6 @@ def setup_logger(
     # Применяем переопределения, если они есть
     if log_level_override:
         config.level = log_level_override
-    elif api_settings and hasattr(
-        api_settings, "LOG_LEVEL"
-    ):  # Пытаемся взять из общих настроек API
-        config.level = api_settings.LOG_LEVEL
-
-    if sentry_dsn_override:
-        config.sentry_dsn = sentry_dsn_override
-    elif api_settings and hasattr(
-        api_settings, "SENTRY_DSN"
-    ):  # Пытаемся взять из общих настроек API
-        config.sentry_dsn = api_settings.SENTRY_DSN
 
     logger.remove()  # Удаляем все предыдущие обработчики, чтобы избежать дублирования
 
@@ -115,42 +91,6 @@ def setup_logger(
             serialize=config.serialize,
             encoding="utf-8",
         )
-
-    # Интеграция с Sentry (если DSN указан)
-    if config.sentry_dsn:
-        try:
-            # Опциональная зависимость, установите sentry-sdk, если используете
-            import sentry_sdk
-            from sentry_sdk.integrations.loguru import LoguruIntegration
-
-            sentry_loguru_integration = LoguruIntegration(
-                level=config.level.upper(),  # Уровень логов, которые отправляются как breadcrumbs
-                event_level="WARNING",  # Уровень логов, которые отправляются как события Sentry
-            )
-            sentry_sdk.init(
-                dsn=config.sentry_dsn,
-                integrations=[sentry_loguru_integration],
-                # Установите traces_sample_rate=1.0 для захвата 100%
-                # транзакций для мониторинга производительности.
-                # Мы рекомендуем настроить это значение в продакшене.
-                traces_sample_rate=1.0,  # Можно сделать настраиваемым
-                # Если вы хотите передавать PII (Personally Identifiable Information) в Sentry
-                # send_default_pii=True
-                environment=os.getenv(
-                    "ENVIRONMENT", "development"
-                ),  # Например: development, staging, production
-                release=f"{api_settings.PROJECT_NAME if api_settings else service_name.lower()}@{api_settings.API_VERSION if api_settings else '0.1.0'}",
-                # Пример релиза
-            )
-            logger.info(f"Sentry integration enabled for service: {service_name}")
-        except ImportError:
-            logger.warning(
-                "Sentry DSN provided, but 'sentry-sdk' is not installed. "
-                "Sentry integration will be disabled. "
-                "Install with: poetry add sentry-sdk"
-            )
-        except Exception as e:
-            logger.error(f"Failed to initialize Sentry for service {service_name}: {e}")
 
     logger.info(
         f"Logger configured for service: {service_name} with level: {config.level}"
