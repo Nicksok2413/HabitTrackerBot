@@ -18,7 +18,7 @@ class User(Base):
     Attributes:
         id: Первичный ключ, внутренний идентификатор пользователя (унаследован от Base).
         telegram_id: Уникальный идентификатор пользователя в Telegram.
-        username: Имя пользователя в Telegram (может быть None).
+        username: Username пользователя в Telegram (может быть None).
         first_name: Имя пользователя в Telegram (может быть None).
         last_name: Фамилия пользователя в Telegram (может быть None).
         is_active: Флаг, активен ли пользователь в системе.
