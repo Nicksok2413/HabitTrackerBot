@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.core.config import settings
 from src.api.core.database import db
 
-# from src.api.core.exceptions import setup_exception_handlers
+from src.api.core.exceptions import setup_exception_handlers
 from src.api.core.logging import api_log as log
 from src.core_shared.sentry_sdk_setup import setup_sentry
 
@@ -75,7 +75,7 @@ def create_app() -> FastAPI:
     )
 
     # Настраиваем обработчики исключений
-    # setup_exception_handlers(app)
+    setup_exception_handlers(app)
     log.info("Обработчики исключений настроены.")
 
     # Подключаем API роутер
