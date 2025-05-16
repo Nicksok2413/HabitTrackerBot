@@ -40,7 +40,7 @@ class Habit(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    target_days: Mapped[int] = mapped_column(Integer, default=21, nullable=False)
+    target_days: Mapped[int] = mapped_column(Integer, nullable=False)
     # Время без учета часового пояса, предполагается локальное время пользователя
     time_to_remind: Mapped[time] = mapped_column(Time(timezone=False), nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False, index=True)
